@@ -5,21 +5,20 @@ module RailsAiDebugger
     end
 
     def call(env)
-      status, headers, body = @app.call(env)
+      status, headers, response = @app.call(env)
       
-      # Only inject on error pages in development
-      if status == 500 && RailsAiDebugger.enabled?
-        body = inject_debugger_ui(body, env)
+      if status == 500 && Rails.env.development?
+        response = inject_ui(response, env)
       end
       
-      [status, headers, body]
+      [status, headers, response]
     end
 
     private
 
-    def inject_debugger_ui(body, env)
-      # Extract error info from env['action_dispatch.exception']
-      # Inject button + JS before </body>
+    def inject_ui(response, env)
+      # TODO: inject button HTML before </body>
+      response
     end
   end
 end
