@@ -9,5 +9,6 @@
 /test/dummy/storage/
 /test/dummy/tmp/
 /.env
+/test/dummy/.env
 /Step-by-step-Implementation-Guide.md
 /RubberDuck-Implementation-Plan.md
