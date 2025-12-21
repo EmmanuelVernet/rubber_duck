@@ -14,7 +14,7 @@ module RubberDuck
       if should_inject?(env, status, headers)
         Rails.logger.info "RubberDuck: Injecting helper into error page"
         body = extract_body(response)
-        modified_body = inject_helper(body, env)
+        modified_body = inject_helper(body, env, status)
         headers["Content-Length"] = modified_body.bytesize.to_s
         [ status, headers, [ modified_body ] ]
       else
@@ -31,10 +31,23 @@ module RubberDuck
     private
 
     def should_inject?(env, status, headers)
-      Rails.env.development? &&
-        RubberDuck.configuration.enabled &&
-        status >= 400 &&
-        headers["Content-Type"]&.include?("text/html")
+      # Check if this is an error response
+      return false unless Rails.env.development?
+      return false unless RubberDuck.configuration.enabled
+      return false unless status >= 400
+
+      path = env["PATH_INFO"]
+      # Avoid injecting into asset-like paths on a 404
+      if status == 404
+        asset_extensions = %w(.ico .png .jpg .jpeg .gif .svg .css .js .json .woff .woff2 .ttf .eot)
+        return false if asset_extensions.any? { |ext| path.end_with?(ext) }
+      end
+
+      # Check for HTML content - Rails might not set Content-Type on error pages
+      content_type = headers["Content-Type"] || headers["content-type"] || ""
+      
+      # Allow injection if content type is HTML or empty (Rails error pages often have no content-type)
+      content_type.empty? || content_type.include?("text/html")
     end
 
     def extract_body(response)
@@ -44,22 +57,45 @@ module RubberDuck
       body
     end
 
-    def inject_helper(body, env)
+    def inject_helper(body, env, status)
       exception = env["action_dispatch.exception"]
-      return body unless exception
-      helper_html = render_helper(exception)
+      Rails.logger.info "RubberDuck: exception=#{exception.inspect}"
+      
+      helper_html = render_helper(exception, env, status)
+      Rails.logger.info "RubberDuck: Generated HTML (first 100 chars): #{helper_html[0..100]}"
 
       # Inject before closing body tag
       if body =~ /<\/body>/i
+        Rails.logger.info "RubberDuck: Found </body> tag, injecting before it"
         body.sub(/<\/body>/i, "#{helper_html}</body>")
       else
+        Rails.logger.info "RubberDuck: No </body> tag found, appending to end. Body length: #{body.length}"
         body + helper_html
       end
     end
 
-    def render_helper(exception)
-      backtrace = exception.backtrace&.first(10) || []
+    def render_helper(exception, env, status)
       logs = capture_logs
+      error_data_script = if exception
+        backtrace = exception.backtrace&.first(10) || []
+        <<~JS
+          const errorData = {
+            exception: #{exception.message.to_json},
+            backtrace: #{backtrace.to_json},
+            logs: #{logs.to_json}
+          };
+        JS
+      else
+        path = env["PATH_INFO"]
+        <<~JS
+          const errorData = {
+            status: #{status},
+            path: #{path.to_json},
+            logs: #{logs.to_json}
+          };
+        JS
+      end
+
       <<~HTML
         <div id="rubber-duck-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;">
           <button id="rubber-duck-button" style="
@@ -91,11 +127,7 @@ module RubberDuck
             const overlay = document.getElementById('rubber-duck-overlay');
             const closeBtn = document.getElementById('rubber-duck-close');
             const content = document.getElementById('rubber-duck-content');
-            const errorData = {
-              exception: #{exception.message.to_json},
-              backtrace: #{backtrace.to_json},
-              logs: #{logs.to_json}
-            };
+            #{error_data_script}
             button.addEventListener('click', async () => {
               modal.style.display = 'block';
               overlay.style.display = 'block';

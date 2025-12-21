@@ -1,3 +1,3 @@
 RubberDuck::Engine.routes.draw do
-	post "/analyze", to: "errors#analyze"
+  post "/analyze_error", to: "errors#analyze"
 end
