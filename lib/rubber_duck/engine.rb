@@ -1,6 +1,7 @@
 module RubberDuck
   class Engine < ::Rails::Engine
     isolate_namespace RubberDuck
+    config.app_middleware.use RubberDuck::Middleware
 
     # Middleware injects UI on error pages
     # initializer "rubber_duck.middleware" do |app|
