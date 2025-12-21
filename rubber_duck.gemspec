@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", ">= 8.0.2.1"
   spec.add_dependency "faraday", "~> 2.0"
+  spec.add_dependency "dotenv-rails"
 end
