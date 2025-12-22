@@ -16,8 +16,36 @@ module RubberDuck
         end
       end
 
+      def analyze_http_error(status:, path:, logs:)
+        return { error: "No API key configured" } unless RubberDuck.configuration.openai_api_key
+        prompt = build_http_error_prompt(status, path, logs)
+        
+        begin
+          response = call_openai(prompt)
+          { success: true, response: response }
+        rescue => e
+          { success: false, error: e.message }
+        end
+      end
+
       private
 
+      def build_http_error_prompt(status, path, logs)
+        <<~PROMPT
+          You are a helpful Ruby on Rails debugging assistant. A developer encountered an HTTP error.
+          STATUS: #{status}
+          PATH: #{path}
+          RECENT LOGS:
+          #{logs || "No logs available"}
+          Please:
+          1. Explain what this HTTP status code means in the context of a Rails application.
+          2. Identify the likely cause for this error on this specific path.
+          3. Suggest specific areas to investigate and potential fixes.
+          
+          Keep your response concise and actionable.
+        PROMPT
+      end
+			
       def build_prompt(exception, backtrace, logs)
         <<~PROMPT
           You are a helpful Ruby on Rails debugging assistant. A developer encountered this error:
