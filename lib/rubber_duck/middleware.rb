@@ -19,11 +19,11 @@ module RubberDuck
       end
       
       [ status, headers, response ]
-    rescue => e
-      # Never break the app if our middleware fails
-      Rails.logger.error("RubberDuck middleware error: #{e.message}")
-      Rails.logger.error(e.backtrace.first(5).join("\n"))
-      [ status, headers, response ]
+    # rescue => e
+    #   # Never break the app if our middleware fails
+    #   Rails.logger.error("RubberDuck middleware error: #{e.message}")
+    #   Rails.logger.error(e.backtrace.first(5).join("\n"))
+    #   [ status, headers, response ]
     end
 
     private
@@ -120,6 +120,9 @@ module RubberDuck
               const overlay = document.getElementById('rubber-duck-overlay');
               const closeBtn = document.getElementById('rubber-duck-close');
               const content = document.getElementById('rubber-duck-content');
+              const pageHeader = document.querySelectorAll('[role="banner"]');
+              console.log("test logging in browser console");
+              console.log("test", pageHeader);
               #{error_data_script}
               button.addEventListener('click', async () => {
                 modal.style.display = 'block';
