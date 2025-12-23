@@ -78,10 +78,13 @@ module RubberDuck
               { role: "system", content: "You are a Rails debugging expert." },
               { role: "user", content: prompt }
             ],
-            temperature: 0.7,
-            max_tokens: 1000
+            temperature: 1,
+            max_completion_tokens: 3000
           }
         end
+        ## debug output
+        puts "======> OpenAI Response Body: #{response.body.inspect}"
+        ##
         response.body.dig("choices", 0, "message", "content")
       end
 			
