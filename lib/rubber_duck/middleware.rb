@@ -15,15 +15,10 @@ module RubberDuck
       # Only intercept in development mode
       if should_inject?(env, status, headers)
         Rails.logger.info "RubberDuck: Replacing response with custom error page"
-        return build_error_response(env, status, headers, response)
+        return inject_button_response(env, status, headers, response)
       end
       
       [ status, headers, response ]
-    # rescue => e
-    #   # Never break the app if our middleware fails
-    #   Rails.logger.error("RubberDuck middleware error: #{e.message}")
-    #   Rails.logger.error(e.backtrace.first(5).join("\n"))
-    #   [ status, headers, response ]
     end
 
     private
@@ -36,31 +31,117 @@ module RubberDuck
       true
     end
 
-    def build_error_response(env, status, headers, response)
-      # Close the original response if it's closable
+    def inject_button_response(env, status, headers, response)
+      # Read original response body
+      original_body = ""
+      response.each { |part| original_body << part }
       response.close if response.respond_to?(:close)
       
-      exception = env["action_dispatch.exception"]
-      body = render_full_page_helper(exception, env, status)
+      Rails.logger.info "RubberDuck: Original body size: #{original_body.bytesize}"
+      Rails.logger.info "RubberDuck: Has </body>?: #{original_body.include?('</body>')}"
       
-      #
-      Rails.logger.info "RubberDuck: Generated body size: #{body.bytesize}"
-      Rails.logger.info "RubberDuck: Generated body snippet: #{body[0..200]}"
-      #
-
+      # Don't inject if not HTML
+      unless original_body.include?('<html') || original_body.include?('</body>')
+        Rails.logger.info "RubberDuck: Not HTML, skipping injection"
+        return [status, headers, [original_body]]
+      end
+      
+      exception = env["action_dispatch.exception"]
+      modified_body = inject_button_into_html(original_body, exception, env, status)
+      
+      Rails.logger.info "RubberDuck: Modified body size: #{modified_body.bytesize}"
+      Rails.logger.info "RubberDuck: Button injected?: #{modified_body.include?('rubber-duck-button')}"
+      
       headers["Content-Type"] = "text/html; charset=utf-8"
-      headers["Content-Length"] = body.bytesize.to_s
+      headers["Content-Length"] = modified_body.bytesize.to_s
       headers["X-RubberDuck-Handled"] = "true"
       
-      [status, headers, [body]]
+      [status, headers, [modified_body]]
     end
 
-    def render_full_page_helper(exception, env, status)
-      # This method will now generate a full HTML page
-      # and include the existing render_helper logic within it.
-      # The old render_helper will be inlined and modified here.
+    def inject_button_into_html(html, exception, env, status)
       logs = capture_logs
-      error_data_script = if exception
+      error_data_script = build_error_data_script(exception, env, status, logs)
+      
+      injection = <<~HTML
+        <div id="rubber-duck-container" style="display: flex; margin-left: 20px;">
+          <button id="rubber-duck-button" style="background: #3eba85; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            🦆 RubberDuck Error
+          </button>
+          <div id="rubber-duck-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); max-width: 600px; max-height: 80vh; overflow-y: auto; z-index: 10001;">
+            <h3 style="margin: 0 0 16px 0; color: #1F2937;">AI Analysis</h3>
+            <div id="rubber-duck-content" style="color: #4B5563; line-height: 1.6;">Analyzing...</div>
+            <button id="rubber-duck-close" style="margin-top: 16px; background: #E5E7EB; color: #374151; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
+          </div>
+          <div id="rubber-duck-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000;"></div>
+        </div>
+        <script>
+          // force align button in DOM 
+          document.addEventListener("DOMContentLoaded", () => {
+            const h1 = document.querySelector("h1")
+            const duck = document.getElementById("rubber-duck-container")
+
+            if (!h1 || !duck) return
+
+            h1.style.display = "flex"
+            h1.style.alignItems = "center"
+
+            h1.appendChild(duck)
+          });
+          // create modal & API call
+          (function() {
+            const button = document.getElementById('rubber-duck-button');
+            const modal = document.getElementById('rubber-duck-modal');
+            const overlay = document.getElementById('rubber-duck-overlay');
+            const closeBtn = document.getElementById('rubber-duck-close');
+            const content = document.getElementById('rubber-duck-content');
+            
+            #{error_data_script}
+            
+            button.addEventListener('click', async () => {
+              modal.style.display = 'block';
+              overlay.style.display = 'block';
+              content.innerHTML = 'Analyzing error... This may take a few seconds.';
+              
+              try {
+                const response = await fetch('/rubber_duck/analyze_error', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(errorData)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                  content.innerHTML = '<pre style="white-space: pre-wrap; font-family: system-ui;">' + result.response + '</pre>';
+                } else {
+                  content.innerHTML = '<span style="color: #DC2626;">Error: ' + (result.error || 'Unknown error') + '</span>';
+                }
+              } catch (error) {
+                content.innerHTML = '<span style="color: #DC2626;">Failed to connect: ' + error.message + '</span>';
+              }
+            });
+            
+            function closeModal() {
+              modal.style.display = 'none';
+              overlay.style.display = 'none';
+            }
+            
+            closeBtn.addEventListener('click', closeModal);
+            overlay.addEventListener('click', closeModal);
+          })();
+        </script>
+      HTML
+      
+      # Inject before </body> if exists, otherwise append
+      if html =~ /<\/header>/i
+        html.sub(/<\/header>/i, "#{injection}</header>")
+      else
+        html + injection
+      end
+    end
+
+    def build_error_data_script(exception, env, status, logs)
+      if exception
         backtrace = exception.backtrace&.first(10) || []
         <<~JS
           const errorData = {
@@ -79,82 +160,6 @@ module RubberDuck
           };
         JS
       end
-
-      error_title = Rack::Utils.escape_html(exception ? "#{exception.class}: #{exception.message}" : "HTTP Status #{status} for #{env['PATH_INFO']}")
-      
-      # The full HTML page
-      <<~HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>RubberDuck Debugger</title>
-          <style>
-            body { font-family: system-ui, sans-serif; background-color: #f9fafb; color: #1f2937; margin: 0; }
-            .container { max-width: 800px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            h1 { font-size: 24px; color: #dc2626; }
-            pre { background-color: #f3f4f6; padding: 16px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>Error Encountered</h1>
-            <pre>#{error_title}</pre>
-            <p>Use the RubberDuck button below to get help from AI.</p>
-          </div>
-
-          <div id="rubber-duck-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000;">
-            <button id="rubber-duck-button" style="background: #4F46E5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-              🦆 Ask AI About This Error
-            </button>
-            <div id="rubber-duck-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); max-width: 600px; max-height: 80vh; overflow-y: auto; z-index: 10001;">
-              <h3 style="margin: 0 0 16px 0; color: #1F2937;">AI Analysis</h3>
-              <div id="rubber-duck-content" style="color: #4B5563; line-height: 1.6;">Analyzing...</div>
-              <button id="rubber-duck-close" style="margin-top: 16px; background: #E5E7EB; color: #374151; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
-            </div>
-            <div id="rubber-duck-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000;"></div>
-          </div>
-          <script>
-            (function() {
-              const button = document.getElementById('rubber-duck-button');
-              const modal = document.getElementById('rubber-duck-modal');
-              const overlay = document.getElementById('rubber-duck-overlay');
-              const closeBtn = document.getElementById('rubber-duck-close');
-              const content = document.getElementById('rubber-duck-content');
-              const pageHeader = document.querySelectorAll('[role="banner"]');
-              console.log("test logging in browser console");
-              console.log("test", pageHeader);
-              #{error_data_script}
-              button.addEventListener('click', async () => {
-                modal.style.display = 'block';
-                overlay.style.display = 'block';
-                content.innerHTML = 'Analyzing error... This may take a few seconds.';
-                try {
-                  const response = await fetch('/rubber_duck/analyze_error', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(errorData)
-                  });
-                  const result = await response.json();
-                  if (result.success) {
-                    content.innerHTML = '<pre style="white-space: pre-wrap; font-family: system-ui;">' + result.response + '</pre>';
-                  } else {
-                    content.innerHTML = '<span style="color: #DC2626;">Error: ' + (result.error || 'Unknown error') + '</span>';
-                  }
-                } catch (error) {
-                  content.innerHTML = '<span style="color: #DC2626;">Failed to connect: ' + error.message + '</span>';
-                }
-              });
-              function closeModal() {
-                modal.style.display = 'none';
-                overlay.style.display = 'none';
-              }
-              closeBtn.addEventListener('click', closeModal);
-              overlay.addEventListener('click', closeModal);
-            })();
-          </script>
-        </body>
-        </html>
-      HTML
     end
 
     def capture_logs
