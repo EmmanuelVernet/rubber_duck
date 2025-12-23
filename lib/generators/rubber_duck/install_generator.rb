@@ -22,6 +22,12 @@ module RubberDuck
 					end
 				CONTENT
 			end
+
+			def add_route
+				say "Adding engine mount point to routes.rb", :green
+				route "mount RubberDuck::Engine => '/rubber_duck'"
+			end
+
 			def show_instructions
 				say "\n✅ RubberDuck installed!", :green
 				say "\nNext steps:"
