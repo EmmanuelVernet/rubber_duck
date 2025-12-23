@@ -64,9 +64,9 @@ module RubberDuck
       error_data_script = build_error_data_script(exception, env, status, logs)
       
       injection = <<~HTML
-        <div id="rubber-duck-container" style="display: inline-block; margin-left: 20px;">
-          <button id="rubber-duck-button" style="background: #4F46E5; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            🦆 RubberDuck This Error
+        <div id="rubber-duck-container" style="display: flex; margin-left: 20px;">
+          <button id="rubber-duck-button" style="background: #3eba85; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            🦆 RubberDuck Error
           </button>
           <div id="rubber-duck-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); max-width: 600px; max-height: 80vh; overflow-y: auto; z-index: 10001;">
             <h3 style="margin: 0 0 16px 0; color: #1F2937;">AI Analysis</h3>
@@ -76,6 +76,19 @@ module RubberDuck
           <div id="rubber-duck-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000;"></div>
         </div>
         <script>
+          // force align button in DOM 
+          document.addEventListener("DOMContentLoaded", () => {
+            const h1 = document.querySelector("h1")
+            const duck = document.getElementById("rubber-duck-container")
+
+            if (!h1 || !duck) return
+
+            h1.style.display = "flex"
+            h1.style.alignItems = "center"
+
+            h1.appendChild(duck)
+          });
+          // create modal & API call
           (function() {
             const button = document.getElementById('rubber-duck-button');
             const modal = document.getElementById('rubber-duck-modal');
