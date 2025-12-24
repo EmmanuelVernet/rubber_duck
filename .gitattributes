@@ -1,0 +1,4 @@
+*.html linguist-ignore
+*.html.erb linguist-ignore
+*.css linguist-ignore
+*.scss linguist-ignore
