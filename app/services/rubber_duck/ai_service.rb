@@ -69,23 +69,28 @@ module RubberDuck
           f.response :json
           f.adapter Faraday.default_adapter
         end
-        response = conn.post("/v1/chat/completions") do |req|
+        response = conn.post("/v1/responses") do |req|
           req.headers["Authorization"] = "Bearer #{RubberDuck.configuration.openai_api_key}"
           req.headers["Content-Type"] = "application/json"
           req.body = {
-            model: RubberDuck.configuration.model,
-            messages: [
-              { role: "system", content: "You are a Rails debugging expert. Explain in simple terms for a beginner with easy wording" },
-              { role: "user", content: prompt }
-            ],
-            temperature: 1,
-            max_completion_tokens: 3000
+            model: "gpt-5-nano",
+            input: prompt,
+            text: {
+            format: {
+              type: "text"
+            },
+            verbosity: "low"
+            },
+            reasoning: {
+              effort: "low"
+            }
           }
         end
         ## debug output
         puts "======> OpenAI Response Body: #{response.body.inspect}"
         ##
-        response.body.dig("choices", 0, "message", "content")
+        # response.body.dig("choices", 0, "message", "content")
+        response.body.dig("output", 1, "content", 0, "text")
       end
 			
     end
