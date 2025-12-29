@@ -4,6 +4,7 @@ module RubberDuck
   class Middleware
     def initialize(app)
       @app = app
+      @model_name = RubberDuck.configuration.model
     end
 
     def call(env)
@@ -28,6 +29,11 @@ module RubberDuck
       return false unless Rails.env.development?
       return false unless RubberDuck.configuration.enabled
       return false unless status >= 400
+
+      # ONLY inject if request for HTML
+      # accept_header = env["HTTP_ACCEPT"].to_s
+      # return false unless accept_header.include?("text/html")
+
       true
     end
 
@@ -65,11 +71,11 @@ module RubberDuck
       
       injection = <<~HTML
         <div id="rubber-duck-container" style="display: flex; margin-left: 20px;">
-          <button id="rubber-duck-button" style="background: #3eba85; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            🦆 RubberDuck Error
+          <button id="rubber-duck-button" style="background: #8f9cc9; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            🦆 RubberDuck
           </button>
           <div id="rubber-duck-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); max-width: 600px; max-height: 80vh; overflow-y: auto; z-index: 10001;">
-            <h3 style="margin: 0 0 16px 0; color: #1F2937;">AI Analysis</h3>
+            <h3 style="margin: 0 0 16px 0; color: #1F2937;">#{@model_name.capitalize} Analysis</h3>
             <div id="rubber-duck-content" style="color: #4B5563; line-height: 1.6;">Analyzing...</div>
             <button id="rubber-duck-close" style="margin-top: 16px; background: #E5E7EB; color: #374151; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
           </div>
