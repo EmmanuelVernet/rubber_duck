@@ -12,7 +12,7 @@ module RubberDuck
 						config.openai_api_key = ENV["OPENAI_API_KEY"]
 					
 						# Model to use
-						config.model = "gpt-4o-mini"
+						config.model = "gpt-5-nano"
 					
 						# Enable/disable the helper
 						config.enabled = true

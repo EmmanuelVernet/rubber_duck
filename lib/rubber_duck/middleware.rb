@@ -31,8 +31,8 @@ module RubberDuck
       return false unless status >= 400
 
       # ONLY inject if request for HTML
-      accept_header = env["HTTP_ACCEPT"].to_s
-      return false unless accept_header.include?("text/html")
+      # accept_header = env["HTTP_ACCEPT"].to_s
+      # return false unless accept_header.include?("text/html")
 
       true
     end

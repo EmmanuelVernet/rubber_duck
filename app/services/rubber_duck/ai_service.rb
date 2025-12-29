@@ -75,7 +75,7 @@ module RubberDuck
           req.body = {
             model: RubberDuck.configuration.model,
             messages: [
-              { role: "system", content: "You are a Rails debugging expert." },
+              { role: "system", content: "You are a Rails debugging expert. Explain in simple terms for a beginner with easy wording" },
               { role: "user", content: prompt }
             ],
             temperature: 1,
