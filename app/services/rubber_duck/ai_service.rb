@@ -32,6 +32,11 @@ module RubberDuck
 
       def build_http_error_prompt(status, path, logs)
         <<~PROMPT
+          INSTRUCTIONS:
+          - Keep verbosity at the minimum.
+          - Keep your response concise and actionable.
+          - Always return every single code snippet inside triple backticks with a language tag.
+          - Do not add <ul> or <li> tags.
           You are a helpful Ruby on Rails debugging assistant. A developer encountered an HTTP error.
           STATUS: #{status}
           PATH: #{path}
@@ -41,17 +46,16 @@ module RubberDuck
           1. Explain what this HTTP status code means in the context of a Rails application.
           2. Identify the likely cause for this error on this specific path.
           3. Suggest specific areas to investigate and potential fixes.
-
-          INSTRUCTIONS:
-          - Keep verbosity at the minimum.
-          - Keep your response concise and actionable.
-          - Always return every single code snippet inside triple backticks with a language tag.
-          - Do not add <ul> or <li> tags.
         PROMPT
       end
 			
       def build_prompt(exception, backtrace, logs)
         <<~PROMPT
+          INSTRUCTIONS:
+          - Keep verbosity at the minimum.
+          - Keep your response concise and actionable.
+          - Always return every single code snippet inside triple backticks with a language tag.
+          - Do not add <ul> or <li> tags.
           You are a helpful Ruby on Rails debugging assistant. A developer encountered this error:
           ERROR: #{exception}
           BACKTRACE:
@@ -62,12 +66,6 @@ module RubberDuck
           1. Explain what this error means in simple terms
           2. Identify the likely cause
           3. Suggest specific fixes
-          
-          INSTRUCTIONS:
-          - Keep verbosity at the minimum.
-          - Keep your response concise and actionable.
-          - Always return every single code snippet inside triple backticks with a language tag.
-          - Do not add <ul> or <li> tags.
         PROMPT
       end
 
