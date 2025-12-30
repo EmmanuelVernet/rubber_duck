@@ -96,6 +96,29 @@ module RubberDuck
           });
           // create modal & API call
           (function() {
+            // const script = document.createElement('script');
+            // script.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
+            // document.head.appendChild(script);
+
+            // 1. Load Marked (Markdown) and Prism (Syntax Highlighting)
+            const libs = [
+              "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
+              "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js",
+              "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-ruby.min.js" // Support for Ruby
+            ];
+
+            libs.forEach(src => {
+              const script = document.createElement('script');
+              script.src = src;
+              document.head.appendChild(script);
+            });
+
+            // 2. Load Prism CSS for the theme (e.g., 'Tomorrow Night')
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css";
+            document.head.appendChild(link);
+
             const button = document.getElementById('rubber-duck-button');
             const modal = document.getElementById('rubber-duck-modal');
             const overlay = document.getElementById('rubber-duck-overlay');
@@ -118,7 +141,10 @@ module RubberDuck
                 const result = await response.json();
                 
                 if (result.success) {
-                  content.innerHTML = '<pre style="white-space: pre-wrap; font-family: system-ui;">' + result.response + '</pre>';
+                  content.innerHTML = '<pre style="white-space: pre-wrap; font-family: system-ui;">' + window.marked.parse(result.response) + '</pre>';
+                  if (window.Prism) {
+                    window.Prism.highlightAllUnder(content);
+                  };
                 } else {
                   content.innerHTML = '<span style="color: #DC2626;">Error: ' + (result.error || 'Unknown error') + '</span>';
                 }
