@@ -37,12 +37,16 @@ module RubberDuck
           PATH: #{path}
           RECENT LOGS:
           #{logs || "No logs available"}
-          Please:
+          OBJECTIVE:
           1. Explain what this HTTP status code means in the context of a Rails application.
           2. Identify the likely cause for this error on this specific path.
           3. Suggest specific areas to investigate and potential fixes.
-          
-          Keep your response concise and actionable. Always return code inside triple backticks with a language tag.
+
+          INSTRUCTIONS:
+          - Keep verbosity at the minimum.
+          - Keep your response concise and actionable.
+          - Always return every single code snippet inside triple backticks with a language tag.
+          - Do not add <ul> or <li> tags.
         PROMPT
       end
 			
@@ -54,12 +58,16 @@ module RubberDuck
           #{backtrace&.first(10)&.join("\n") || "No backtrace available"}
           RECENT LOGS:
           #{logs || "No logs available"}
-          Please:
-          1. Explain what this error means
+          OBJECTIVE:
+          1. Explain what this error means in simple terms
           2. Identify the likely cause
           3. Suggest specific fixes
           
-          Keep your response concise and actionable. Always return code inside triple backticks with a language tag.
+          INSTRUCTIONS:
+          - Keep verbosity at the minimum.
+          - Keep your response concise and actionable.
+          - Always return every single code snippet inside triple backticks with a language tag.
+          - Do not add <ul> or <li> tags.
         PROMPT
       end
 
