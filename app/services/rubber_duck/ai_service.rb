@@ -42,7 +42,7 @@ module RubberDuck
           2. Identify the likely cause for this error on this specific path.
           3. Suggest specific areas to investigate and potential fixes.
           
-          Keep your response concise and actionable.
+          Keep your response concise and actionable. Always return code inside triple backticks with a language tag.
         PROMPT
       end
 			
@@ -59,7 +59,7 @@ module RubberDuck
           2. Identify the likely cause
           3. Suggest specific fixes
           
-          Keep your response concise and actionable.
+          Keep your response concise and actionable. Always return code inside triple backticks with a language tag.
         PROMPT
       end
 
