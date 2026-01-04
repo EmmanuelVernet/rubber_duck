@@ -34,6 +34,10 @@ module RubberDuck
       # accept_header = env["HTTP_ACCEPT"].to_s
       # return false unless accept_header.include?("text/html")
 
+      # Ignore specific background noise
+      # path = env["PATH_INFO"].to_s
+      # return false if path.match?(/\.(ico|json|map|png|jpg|js|css)$/)
+
       true
     end
 
@@ -172,25 +176,45 @@ module RubberDuck
     end
 
     def build_error_data_script(exception, env, status, logs)
-      if exception
-        backtrace = exception.backtrace&.first(10) || []
-        <<~JS
-          const errorData = {
-            exception: #{exception.message.to_json},
-            backtrace: #{backtrace.to_json},
-            logs: #{logs.to_json}
-          };
-        JS
+      # if exception
+      #   backtrace = exception.backtrace&.first(10) || []
+      #   <<~JS
+      #     const errorData = {
+      #       exception: #{exception.message.to_json},
+      #       backtrace: #{backtrace.to_json},
+      #       logs: #{logs.to_json}
+      #     };
+      #   JS
+      # else
+      #   path = env["PATH_INFO"]
+      #   <<~JS
+      #     const errorData = {
+      #       status: #{status},
+      #       path: #{path.to_json},
+      #       logs: #{logs.to_json}
+      #     };
+      #   JS
+      # end
+
+      # Prepare the data object in Ruby
+      data = if exception
+        {
+          exception: exception.message,
+          backtrace: exception.backtrace&.first(10) || [],
+          logs: logs
+        }
       else
-        path = env["PATH_INFO"]
-        <<~JS
-          const errorData = {
-            status: #{status},
-            path: #{path.to_json},
-            logs: #{logs.to_json}
-          };
-        JS
+        {
+          status: status,
+          path: env["PATH_INFO"],
+          logs: logs
+        }
       end
+
+      # Inject it as a single, globally accessible JSON object
+      <<~JS
+        window.errorData = #{data.to_json};
+      JS
     end
 
     def capture_logs
