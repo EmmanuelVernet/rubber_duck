@@ -1,8 +1,8 @@
 # RubberDuck
-Short description and motivation.
+Under development /!\
 
 ## Usage
-How to use my plugin.
+TBA
 
 ## Installation
 Add this line to your application's Gemfile:
