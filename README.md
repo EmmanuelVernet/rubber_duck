@@ -1,10 +1,6 @@
 # RubberDuck
-<<<<<<< HEAD
 Under development
 ![Alt text](app/assets/images/rubber_duck/v-0-example.png)
-=======
-Under development /!\
->>>>>>> master
 
 ## Usage
 TBA
