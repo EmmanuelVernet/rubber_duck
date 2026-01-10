@@ -1,9 +1,13 @@
 # RubberDuck
+<<<<<<< HEAD
 Under development
 ![Alt text](app/assets/images/rubber_duck/v-0-example.png)
+=======
+Under development /!\
+>>>>>>> master
 
 ## Usage
-How to use my plugin.
+TBA
 
 ## Installation
 Add this line to your application's Gemfile:
