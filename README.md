@@ -1,5 +1,6 @@
 # RubberDuck
-Short description and motivation.
+Under development
+![Alt text](app/assets/images/rubber_duck/v-0-example.png)
 
 ## Usage
 How to use my plugin.
