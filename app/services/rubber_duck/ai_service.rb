@@ -7,7 +7,7 @@ module RubberDuck
       def analyze_error(exception_message:, backtrace:, logs:)
         return { error: "No API key configured" } unless RubberDuck.configuration.openai_api_key
         prompt = build_prompt(exception_message, backtrace, logs)
-        
+
         begin
           response = call_openai(prompt)
           { success: true, response: response }
@@ -19,7 +19,7 @@ module RubberDuck
       # def analyze_http_error(status:, path:, logs:)
       #   return { error: "No API key configured" } unless RubberDuck.configuration.openai_api_key
       #   prompt = build_http_error_prompt(status, path, logs)
-        
+
       #   begin
       #     response = call_openai(prompt)
       #     { success: true, response: response }
@@ -48,7 +48,7 @@ module RubberDuck
       #     3. Suggest specific areas to investigate and potential fixes.
       #   PROMPT
       # end
-			
+
       def build_prompt(exception, backtrace, logs)
         <<~PROMPT
           INSTRUCTIONS:
@@ -79,7 +79,7 @@ module RubberDuck
           req.headers["Authorization"] = "Bearer #{RubberDuck.configuration.openai_api_key}"
           req.headers["Content-Type"] = "application/json"
           req.body = {
-            model: "gpt-5-nano",
+            model: RubberDuck.configuration.model || "gpt-5-nano",
             input: prompt,
             text: {
             format: {
@@ -98,7 +98,7 @@ module RubberDuck
         # response.body.dig("choices", 0, "message", "content")
         response.body.dig("output", 1, "content", 0, "text")
       end
-			
+
     end
   end
 end
