@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors     = [ "Emmanuel Vernet" ]
   spec.email       = [ "vernet.emmanuel@gmail.com" ]
   spec.homepage    = "TODO"
-  spec.summary     = "RubberDuck is a gem to help you get error context with AI in Rails error pages"
+  spec.summary     = "RubberDuck is a Developer error helper gem to help you analyze errors with AI in Rails"
   spec.description = "This gem allows the Rails developer to avoid switching context from Rails error pages during development. When getting an error, you can send the error and logs to an AI model of your choice and get a response to help you understand or pin point the issue while avoiding copy pasting code or logs into an external AI window. Perfect for those who prefer to code with minimal AI presence in their editor of choice!"
   spec.license     = "MIT"
 
@@ -14,9 +14,9 @@ Gem::Specification.new do |spec|
   # to allow pushing to a single host or delete this section to allow pushing to any host.
   spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
-  spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+  spec.metadata["homepage_uri"] = "https://github.com/EmmanuelVernet/rubber_duck"
+  spec.metadata["source_code_uri"] = "https://github.com/EmmanuelVernet/rubber_duck"
+  spec.metadata["changelog_uri"] = "https://github.com/EmmanuelVernet/rubber_duck/releases"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
