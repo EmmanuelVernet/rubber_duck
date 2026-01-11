@@ -15,9 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   // 1. Load Marked (Markdown) and Prism (Syntax Highlighting) libs
   const libs = [
-    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
     "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js",
     "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-ruby.min.js", // Support for Ruby
+    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
   ];
 
   libs.forEach((src) => {
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
   });
 
-  // 2. Load Prism CSS for the theme (e.g., 'Tomorrow Night')
+  // 2. Load Prism CSS for the theme
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href =
@@ -54,7 +54,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (result.success) {
         content.innerHTML = window.marked.parse(result.response);
-        // '<pre style="white-space: pre-wrap; font-family: system-ui;">' + window.marked.parse(result.response) + '</pre>';
         setTimeout(() => {
           if (window.Prism) {
             window.Prism.highlightAllUnder(content);

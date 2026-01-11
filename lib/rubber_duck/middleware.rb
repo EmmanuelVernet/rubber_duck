@@ -1,4 +1,5 @@
 require "rack/utils"
+require "erb"
 
 module RubberDuck
   class Middleware
@@ -11,11 +12,11 @@ module RubberDuck
       status, headers, response = @app.call(env)
 
       # Debug logging
-      Rails.logger.info "RubberDuck: status=#{status}, content_type=#{headers['Content-Type']}, dev=#{Rails.env.development?}, enabled=#{RubberDuck.configuration.enabled}"
+      # Rails.logger.info "RubberDuck: status=#{status}, content_type=#{headers['Content-Type']}, dev=#{Rails.env.development?}, enabled=#{RubberDuck.configuration.enabled}"
 
       # Only intercept in development mode
       if should_inject?(env, status, headers)
-        Rails.logger.info "RubberDuck: Replacing response with custom error page"
+        # Rails.logger.info "RubberDuck: Replacing response with custom error page"
         return inject_button_response(env, status, headers, response)
       end
 
@@ -47,41 +48,44 @@ module RubberDuck
       response.each { |part| original_body << part }
       response.close if response.respond_to?(:close)
 
-      Rails.logger.info "RubberDuck: Original body size: #{original_body.bytesize}"
-      Rails.logger.info "RubberDuck: Has </body>?: #{original_body.include?('</body>')}"
+      # Rails.logger.info "RubberDuck: Original body size: #{original_body.bytesize}"
+      # Rails.logger.info "RubberDuck: Has </body>?: #{original_body.include?('</body>')}"
 
       # Don't inject if not HTML
       unless original_body.include?('<html') || original_body.include?('</body>')
-        Rails.logger.info "RubberDuck: Not HTML, skipping injection"
-        return [status, headers, [original_body]]
+        # Rails.logger.info "RubberDuck: Not HTML, skipping injection"
+        return [ status, headers, [ original_body ] ]
       end
 
       exception = env["action_dispatch.exception"]
       modified_body = inject_button_into_html(original_body, exception, env, status)
 
-      Rails.logger.info "RubberDuck: Modified body size: #{modified_body.bytesize}"
-      Rails.logger.info "RubberDuck: Button injected?: #{modified_body.include?('rubber-duck-button')}"
+      # Rails.logger.info "RubberDuck: Modified body size: #{modified_body.bytesize}"
+      # Rails.logger.info "RubberDuck: Button injected?: #{modified_body.include?('rubber-duck-button')}"
 
       headers["Content-Type"] = "text/html; charset=utf-8"
       headers["Content-Length"] = modified_body.bytesize.to_s
       headers["X-RubberDuck-Handled"] = "true"
 
-      [status, headers, [modified_body]]
+      [ status, headers, [ modified_body ] ]
     end
 
     def inject_button_into_html(html, exception, env, status)
-      button_html = ApplicationController.render(
-        partial: "rubber_duck/button",
-        locals: {
-          model_name: @model_name
-        }
-      )
+      gem_path = Gem.loaded_specs['rubber_duck'].full_gem_path
+      # button_html = ApplicationController.render(
+      #   partial: "rubber_duck/button",
+      #   locals: {
+      #     model_name: @model_name
+      #   }
+      # )
+      partial_path = File.join(gem_path, 'app/views/rubber_duck/_button.html.erb')
+      partial_content = File.read(partial_path)
+      button_html = ERB.new(partial_content).result(binding)
+
       logs = capture_logs
       error_data_script = build_error_data_script(exception, env, status, logs)
 
-      # 3. Load the CSS and JS from their files within the gem
-      gem_path = Gem.loaded_specs['rubber_duck'].full_gem_path
-      # modal_css = File.read(File.join(gem_path,'app/assets/stylesheets/rubber_duck/modal.css'))
+      # Load JS from file
       modal_js = File.read(File.join(gem_path, 'app/assets/javascripts/rubber_duck/modal.js'))
 
       injection = <<~HTML
@@ -103,26 +107,6 @@ module RubberDuck
     end
 
     def build_error_data_script(exception, env, status, logs)
-      # if exception
-      #   backtrace = exception.backtrace&.first(10) || []
-      #   <<~JS
-      #     const errorData = {
-      #       exception: #{exception.message.to_json},
-      #       backtrace: #{backtrace.to_json},
-      #       logs: #{logs.to_json}
-      #     };
-      #   JS
-      # else
-      #   path = env["PATH_INFO"]
-      #   <<~JS
-      #     const errorData = {
-      #       status: #{status},
-      #       path: #{path.to_json},
-      #       logs: #{logs.to_json}
-      #     };
-      #   JS
-      # end
-
       # Prepare the data object in Ruby
       data = if exception
         {
