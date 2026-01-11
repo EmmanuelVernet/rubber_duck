@@ -5,7 +5,7 @@ Gem::Specification.new do |spec|
   spec.version     = RubberDuck::VERSION
   spec.authors     = [ "Emmanuel Vernet" ]
   spec.email       = [ "vernet.emmanuel@gmail.com" ]
-  spec.homepage    = "TODO"
+  spec.homepage    = "https://github.com/EmmanuelVernet/rubber_duck"
   spec.summary     = "RubberDuck is a Developer error helper gem to help you analyze errors with AI in Rails"
   spec.description = "This gem allows the Rails developer to avoid switching context from Rails error pages during development. When getting an error, you can send the error and logs to an AI model of your choice and get a response to help you understand or pin point the issue while avoiding copy pasting code or logs into an external AI window. Perfect for those who prefer to code with minimal AI presence in their editor of choice!"
   spec.license     = "MIT"
