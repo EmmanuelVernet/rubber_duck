@@ -70,14 +70,19 @@ module RubberDuck
     end
 
     def inject_button_into_html(html, exception, env, status)
-      logs = capture_logs
-      error_data_script = build_error_data_script(exception, env, status, logs)
       button_html = ApplicationController.render(
         partial: "rubber_duck/button",
         locals: {
           model_name: @model_name
         }
       )
+      logs = capture_logs
+      error_data_script = build_error_data_script(exception, env, status, logs)
+
+      # 3. Load the CSS and JS from their files within the gem
+      gem_path = Gem.loaded_specs['rubber_duck'].full_gem_path
+      # modal_css = File.read(File.join(gem_path,'app/assets/stylesheets/rubber_duck/modal.css'))
+      modal_js = File.read(File.join(gem_path, 'app/assets/javascripts/rubber_duck/modal.js'))
 
       injection = <<~HTML
         <div>
@@ -85,6 +90,7 @@ module RubberDuck
         </div>
         <script>
          #{error_data_script}
+         #{modal_js}
         </script>
       HTML
 
