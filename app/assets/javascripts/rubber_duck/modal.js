@@ -15,9 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
 (function () {
   // 1. Load Marked (Markdown) and Prism (Syntax Highlighting) libs
   const libs = [
+    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
     "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js",
     "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-ruby.min.js", // Support for Ruby
-    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
   ];
 
   libs.forEach((src) => {
