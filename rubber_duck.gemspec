@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the "allowed_push_host"
   # to allow pushing to a single host or delete this section to allow pushing to any host.
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.metadata["homepage_uri"] = "https://github.com/EmmanuelVernet/rubber_duck"
   spec.metadata["source_code_uri"] = "https://github.com/EmmanuelVernet/rubber_duck"
@@ -26,5 +26,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", "~> 8.0", ">= 8.0.2.1"
   spec.add_dependency "faraday", "~> 2.0"
-  spec.add_dependency "dotenv-rails"
+  spec.add_development_dependency "dotenv-rails"
 end
