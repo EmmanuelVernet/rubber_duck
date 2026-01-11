@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   h1.appendChild(duck);
 });
+
 // create modal & API call
 (function () {
   // 1. Load Marked (Markdown) and Prism (Syntax Highlighting) libs
@@ -37,8 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("rubber-duck-overlay");
   const closeBtn = document.getElementById("rubber-duck-close");
   const content = document.getElementById("rubber-duck-content");
-
-  //#{error_data_script}
 
   button.addEventListener("click", async () => {
     modal.style.display = "block";

@@ -72,18 +72,16 @@ module RubberDuck
     def inject_button_into_html(html, exception, env, status)
       logs = capture_logs
       error_data_script = build_error_data_script(exception, env, status, logs)
+      button_html = ApplicationController.render(
+        partial: "rubber_duck/button",
+        locals: {
+          model_name: @model_name
+        }
+      )
 
       injection = <<~HTML
-        <div id="rubber-duck-container" style="display: flex; margin-left: 20px;">
-          <button id="rubber-duck-button" style="background: #8f9cc9; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            🦆 RubberDuck
-          </button>
-          <div id="rubber-duck-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 24px; border-radius: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.2); max-width: 600px; max-height: 80vh; overflow-y: auto; z-index: 10001;">
-            <h3 style="margin: 0 0 16px 0; color: #1F2937;">#{@model_name.capitalize} Analysis</h3>
-            <div id="rubber-duck-content" style="color: #4B5563; line-height: 1.6;">Analyzing...</div>
-            <button id="rubber-duck-close" style="margin-top: 16px; background: #E5E7EB; color: #374151; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
-          </div>
-          <div id="rubber-duck-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000;"></div>
+        <div>
+          #{button_html}
         </div>
         <script>
          #{error_data_script}
