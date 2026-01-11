@@ -9,16 +9,16 @@ module RubberDuck
 
     def call(env)
       status, headers, response = @app.call(env)
-      
+
       # Debug logging
       Rails.logger.info "RubberDuck: status=#{status}, content_type=#{headers['Content-Type']}, dev=#{Rails.env.development?}, enabled=#{RubberDuck.configuration.enabled}"
-      
+
       # Only intercept in development mode
       if should_inject?(env, status, headers)
         Rails.logger.info "RubberDuck: Replacing response with custom error page"
         return inject_button_response(env, status, headers, response)
       end
-      
+
       [ status, headers, response ]
     end
 
@@ -46,33 +46,33 @@ module RubberDuck
       original_body = ""
       response.each { |part| original_body << part }
       response.close if response.respond_to?(:close)
-      
+
       Rails.logger.info "RubberDuck: Original body size: #{original_body.bytesize}"
       Rails.logger.info "RubberDuck: Has </body>?: #{original_body.include?('</body>')}"
-      
+
       # Don't inject if not HTML
       unless original_body.include?('<html') || original_body.include?('</body>')
         Rails.logger.info "RubberDuck: Not HTML, skipping injection"
         return [status, headers, [original_body]]
       end
-      
+
       exception = env["action_dispatch.exception"]
       modified_body = inject_button_into_html(original_body, exception, env, status)
-      
+
       Rails.logger.info "RubberDuck: Modified body size: #{modified_body.bytesize}"
       Rails.logger.info "RubberDuck: Button injected?: #{modified_body.include?('rubber-duck-button')}"
-      
+
       headers["Content-Type"] = "text/html; charset=utf-8"
       headers["Content-Length"] = modified_body.bytesize.to_s
       headers["X-RubberDuck-Handled"] = "true"
-      
+
       [status, headers, [modified_body]]
     end
 
     def inject_button_into_html(html, exception, env, status)
       logs = capture_logs
       error_data_script = build_error_data_script(exception, env, status, logs)
-      
+
       injection = <<~HTML
         <div id="rubber-duck-container" style="display: flex; margin-left: 20px;">
           <button id="rubber-duck-button" style="background: #8f9cc9; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -86,87 +86,10 @@ module RubberDuck
           <div id="rubber-duck-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000;"></div>
         </div>
         <script>
-          // force align button in DOM 
-          document.addEventListener("DOMContentLoaded", () => {
-            const h1 = document.querySelector("h1")
-            const duck = document.getElementById("rubber-duck-container")
-
-            if (!h1 || !duck) return
-
-            h1.style.display = "flex"
-            h1.style.alignItems = "center"
-
-            h1.appendChild(duck)
-          });
-          // create modal & API call
-          (function() {
-            // 1. Load Marked (Markdown) and Prism (Syntax Highlighting) libs
-            const libs = [
-              "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
-              "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js",
-              "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-ruby.min.js" // Support for Ruby
-            ];
-
-            libs.forEach(src => {
-              const script = document.createElement('script');
-              script.src = src;
-              document.head.appendChild(script);
-            });
-
-            // 2. Load Prism CSS for the theme (e.g., 'Tomorrow Night')
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css";
-            document.head.appendChild(link);
-
-            const button = document.getElementById('rubber-duck-button');
-            const modal = document.getElementById('rubber-duck-modal');
-            const overlay = document.getElementById('rubber-duck-overlay');
-            const closeBtn = document.getElementById('rubber-duck-close');
-            const content = document.getElementById('rubber-duck-content');
-            
-            #{error_data_script}
-            
-            button.addEventListener('click', async () => {
-              modal.style.display = 'block';
-              overlay.style.display = 'block';
-              content.innerHTML = 'Analyzing error... This may take a few seconds.';
-              
-              try {
-                const response = await fetch('/rubber_duck/analyze_error', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(errorData)
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                  content.innerHTML = window.marked.parse(result.response);
-                  // '<pre style="white-space: pre-wrap; font-family: system-ui;">' + window.marked.parse(result.response) + '</pre>';
-                setTimeout(() => {
-                    if (window.Prism) {
-                      window.Prism.highlightAllUnder(content);
-                    }
-                  }, 100);
-                } else {
-                  content.innerHTML = '<span style="color: #DC2626;">Error: ' + (result.error || 'Unknown error') + '</span>';
-                }
-              } catch (error) {
-                content.innerHTML = '<span style="color: #DC2626;">Failed to connect: ' + error.message + '</span>';
-              }
-            });
-            
-            function closeModal() {
-              modal.style.display = 'none';
-              overlay.style.display = 'none';
-            }
-            
-            closeBtn.addEventListener('click', closeModal);
-            overlay.addEventListener('click', closeModal);
-          })();
+         #{error_data_script}
         </script>
       HTML
-      
+
       # Inject before </body> if exists, otherwise append
       if html =~ /<\/header>/i
         html.sub(/<\/header>/i, "#{injection}</header>")
