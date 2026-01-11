@@ -11,33 +11,35 @@ Here's an example of the view it can generate currently
 ## Usage
 - this gem runs automatically when a standard rails error page shows. No rails commands needed!
 
-[!WARNING]
-Be aware that this gem uses your code and server logs to be sent to the AI model. Do not hardcode sensitive values such as tokens!!
+> ⚠️ **Warning**
+>
+> Be aware that this gem uses your code and server logs to be sent to the AI model. Do not hardcode sensitive values such as tokens!!
 However, the gem will not run in production, only in development
 
 ## Installation
 Add this line to your application's Gemfile:
 
-[!WARNING]
-Add this to your development gems. It will not run in production environments!
+> ⚠️ **Warning**
+>
+> Add this to your development gems. It will not run in production environments!
 
 ```ruby
 gem "rubber_duck"
 ```
 
 And then execute:
-```bash
-$ bundle install
+```ruby
+bundle install
 ```
 
 Or install it yourself as:
-```bash
-$ gem install rubber_duck
+```ruby
+gem install rubber_duck
 ```
 
 Run the install generator to create the initializer file:
-```bash
-$ rails generate rubber_duck:install
+```ruby
+rails generate rubber_duck:install
 ```
 
 ## Configuration
