@@ -2,9 +2,8 @@ PATH
   remote: .
   specs:
     rubber_duck (0.1.0)
-      dotenv-rails
       faraday (~> 2.0)
-      rails (>= 8.0.2.1)
+      rails (~> 8.0, >= 8.0.2.1)
 
 GEM
   remote: https://rubygems.org/
@@ -173,7 +172,7 @@ GEM
     psych (5.3.1)
       date
       stringio
-    puma (7.1.0)
+    puma (7.2.0)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.2.4)
@@ -289,6 +288,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  dotenv-rails
   propshaft
   puma
   rubber_duck!
